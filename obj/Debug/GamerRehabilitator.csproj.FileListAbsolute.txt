@@ -1,0 +1,14 @@
+D:\repos\GamerRehabilitator\bin\Debug\GamerRehabilitator.exe.config
+D:\repos\GamerRehabilitator\bin\Debug\GamerRehabilitator.exe
+D:\repos\GamerRehabilitator\bin\Debug\GamerRehabilitator.pdb
+D:\repos\GamerRehabilitator\bin\Debug\System.CodeDom.dll
+D:\repos\GamerRehabilitator\bin\Debug\System.CodeDom.xml
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.csproj.AssemblyReference.cache
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.csproj.SuggestedBindingRedirects.cache
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.Properties.Resources.resources
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.csproj.GenerateResource.cache
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.csproj.CoreCompileInputs.cache
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.csproj.CopyComplete
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.exe
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.pdb
+D:\repos\GamerRehabilitator\obj\Debug\GamerRehabilitator.ShockSettings.resources
