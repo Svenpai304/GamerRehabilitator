@@ -1,20 +1,19 @@
-String received;
+byte receivedData;
 
 //=================================================== START OF COLLAR SETUP CODE ======================================================================
 
 //const int shock_min = 0; // Minimum of power a command will be executed at
-const int shock_delay = 10;  // Maximum rate at which the shock function can be used at
+const int shock_delay = 1000;  // Maximum rate at which the shock function can be used at
 //const int cmd_max = 1000; // Maximum of milliseconds which a command can be executed at
 
 // Constant variables
 const int pin_led = LED_BUILTIN;         // Pin for indication LED
-const int pin_rtx = 11;                  // Pin to transmit over
+const int pin_rtx = 12;                  // Pin to transmit over
 const String key = "00101100101001010";  // Key of the transmitter, dont touch if you dont know how it works
 
 // Variables which do change
 int collar_chan = 0;        // Can be channel 0 or 1
 int collar_duration = 500;  // Duration of the command in milliseconds
-int collar_power = 10;      // Strength of the command, can be 0-100, but will be limited by shock_min and shock_max
 
 // Define values for easier recognition
 #define COLLAR_LED 1
@@ -82,23 +81,23 @@ void transmit_command(int c, int m, int p = 0) {
   //  {
   // start bit
   digitalWrite(pin_rtx, HIGH);
-  delayMicroseconds(400);  // chnged to new protocol
+  delayMicroseconds(1540);  // chnged to new protocol
   digitalWrite(pin_rtx, LOW);
-  delayMicroseconds(750);  // wait 750 uS
+  delayMicroseconds(800);  // wait 750 uS
 
   for (int n = 0; n < 41; n++) {
     if (sequence.charAt(n) == '1')  // Transmit a one
     {
       digitalWrite(pin_rtx, HIGH);
-      delayMicroseconds(200);  // chnged to new protocol
+      delayMicroseconds(740);  // chnged to new protocol
       digitalWrite(pin_rtx, LOW);
-      delayMicroseconds(1500);  // chnged to new protocol
-    } else                      // Transmit a zero
+      delayMicroseconds(300);  // chnged to new protocol
+    } else                     // Transmit a zero
     {
       digitalWrite(pin_rtx, HIGH);
-      delayMicroseconds(200);  // chnged to new protocol
+      delayMicroseconds(220);  // chnged to new protocol
       digitalWrite(pin_rtx, LOW);
-      delayMicroseconds(750);  // chnged to new protocol
+      delayMicroseconds(820);  // chnged to new protocol
     }
   }
   delayMicroseconds(9000);  // chnged to new protocol
@@ -116,6 +115,26 @@ void collar_keepalive() {
 
 //=================================================== END OF COLLAR SETUP CODE ======================================================================
 
+//=================================================== START OF SERIAL RECEIVER CODE =================================================================
+
+void receive_command(byte command) {
+  if (millis() - transmit_last < shock_delay) {
+    return;
+  }
+  int command_mode;
+  switch (bitRead(command, 7)) {
+    case 1: command_mode = COLLAR_ZAP; break;
+    default: command_mode = COLLAR_VIB; break;
+  }
+  bitWrite(command, 7, 0);
+  int power = command;
+  for (int i = 0; i < 5; i++) {
+    transmit_command(collar_chan, command_mode, power);
+  }
+}
+//=================================================== End OF SERIAL RECEIVER CODE ====================================================================
+
+
 void setup() {
   //=================================================== START OF COLLAR SETUP CODE ======================================================================
   pinMode(pin_rtx, OUTPUT);  // Set transmitter pin as output
@@ -128,8 +147,9 @@ void setup() {
 
 void loop() {
   collar_keepalive();
-  if (Serial.available() > 0) {
-    Serial.read();
-    transmit_command(collar_chan, COLLAR_ZAP, 100);
+  if (Serial.available()) {
+    receivedData = Serial.read();
+    Serial.write(receivedData);
+    receive_command(receivedData);
   }
 }
