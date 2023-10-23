@@ -12,17 +12,12 @@ namespace GamerRehabilitator
 
     public partial class ShockSettings : Form
     {
-        // DLL libraries used to manage hotkeys
-        [DllImport("user32.dll")]
-        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
-        [DllImport("user32.dll")]
-        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-
         public Keys targetKey = Keys.None;
         private bool keyHeld = false;
 
-        private SerialPort serialPort = new SerialPort("COM0", 9600);
+        private SerialPort serialPort = new SerialPort("COM0", 9600); // Serial port to use for the Arduino
 
+        // Instantiate event which triggers every time the standard microphone updates its value
         private NAudio.Wave.WaveInEvent waveIn = new NAudio.Wave.WaveInEvent
         {
             DeviceNumber = 0, // indicates which microphone to use
@@ -30,7 +25,7 @@ namespace GamerRehabilitator
             BufferMilliseconds = 20
         };
         private float currentAudioValue = 0;
-        private float triggerAudioValue = 0.0f;
+        private float triggerAudioValue = 0;
 
         private GlobalKeyboardHook globalKeyboardHook;
 
@@ -50,13 +45,16 @@ namespace GamerRehabilitator
             globalKeyboardHook = new GlobalKeyboardHook();
             globalKeyboardHook.KeyboardPressed += OnKeyPressed;
 
-            // Set up audio input
+            // Further set up audio input
             waveIn.DataAvailable += WaveIn_DataAvailable;
             waveIn.StartRecording();
 
+            // Set up Serial port printing to console
             serialPort.DataReceived += PrintSerialData;
         }
 
+        // Called whenever data is added to the Serial buffer from the Arduino,
+        // and writes it into the console for debugging.
         private void PrintSerialData(object sender, SerialDataReceivedEventArgs e)
         {
             byte[] bytes = new byte[32];
@@ -64,14 +62,21 @@ namespace GamerRehabilitator
             Console.WriteLine(bytes[0]);
         }
 
+        // Calls the command function if both trigger conditions are met.
         private void CheckTriggerValues()
         {
             if (keyHeld && currentAudioValue >= triggerAudioValue)
             {
                 SendCommand();
             }
+            else if (targetKey == Keys.None && currentAudioValue >= triggerAudioValue && triggerAudioValue != 0) // Case for only using the audio as trigger
+            {
+                SendCommand();
+            }
         }
 
+        // Called whenever a keyboard hook event occurs. 
+        // If the targeted key is used, the keyHeld value is changed.
         private void OnKeyPressed(object sender, GlobalKeyboardHookEventArgs e)
         {
             Keys key = e.KeyboardData.Key;
@@ -87,6 +92,9 @@ namespace GamerRehabilitator
             }
         }
 
+        // Called whenever new microphone data is available.
+        // Translates this data into a float between 0 and 1 which is
+        // then used as the audio value for any trigger check.
         private void WaveIn_DataAvailable(object sender, NAudio.Wave.WaveInEventArgs e)
         {
             // copy buffer into an array of integers
@@ -96,8 +104,12 @@ namespace GamerRehabilitator
             // determine the highest value as a fraction of the maximum possible value
             float fraction = (float)values.Max() / 32768;
             currentAudioValue = fraction;
+            this.Invoke((MethodInvoker)delegate () { CheckTriggerValues(); }); // Calls the function on the main thread
         }
 
+        // Called when the Apply button on the form is clicked.
+        // This function then sets the Serial port's name and opens it,
+        // then sets the target key according to the key set in the form.
         private void Apply_Click(object sender, EventArgs e)
         {
             statusTextBox.Text = "Setting...";
@@ -112,7 +124,7 @@ namespace GamerRehabilitator
                 serialPort.PortName = portComboBox.Text;
                 serialPort.Open();
             }
-            Task.Delay(1000).Wait();
+            Task.Delay(3000).Wait(); // Gives the Arduino some time to restart after the Serial port is opened
 
             triggerAudioValue = (float)numericUpDown1.Value / 100;
             Keys key;
@@ -124,6 +136,7 @@ namespace GamerRehabilitator
             else { statusTextBox.Text = "Invalid key"; }
         }
 
+        // Sends a command over the Serial port using the values input in the form.
         private void SendCommand()
         {
             byte powerValue = (byte)powerSlider.Value;
