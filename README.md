@@ -1,6 +1,7 @@
 # GamerRehabilitator
 This program activates a shock collar based on keyboard and microphone input.
-The shock collar is activated using an RF transmitter connected to an Arduino - for more information on the hardware setup, see the related Instructable.
+The shock collar is activated using an RF transmitter connected to an Arduino - for more information on the hardware setup, see the related [Instructable.](![image](https://www.instructables.com/Gamer-Rehabilitator/)
+
 Code for RF transmission adapted from [dpmartee's repo.](https://github.com/dpmartee/arduino-shock-collar)
 
 # Warning
