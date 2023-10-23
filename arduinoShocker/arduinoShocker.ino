@@ -1,3 +1,7 @@
+// Arduino sketch to be used with the desktop app available here: https://github.com/Svenpai304/GamerRehabilitator
+// RF transmission code adapted from: https://github.com/dpmartee/arduino-shock-collar
+// With transmission timings from: https://github.com/smouldery/shock-collar-control/blob/master/Arduino%20Modules/transmitter_vars.ino
+
 byte receivedData;
 
 //=================================================== START OF COLLAR SETUP CODE ======================================================================
@@ -27,6 +31,8 @@ String sequence, power, channelnorm, channelinv, modenorm, modeinv;
 // Store the last time anything was transmitted to the collar
 unsigned long transmit_last = 0;
 unsigned long shock_last = 0;
+
+// Command transmission function
 void transmit_command(int c, int m, int p = 0) {
   transmit_last = millis();
   switch (c)  // Check the channel
@@ -117,19 +123,21 @@ void collar_keepalive() {
 
 //=================================================== START OF SERIAL RECEIVER CODE =================================================================
 
+// One-byte serial command reader
 void receive_command(byte command) {
-  if (millis() - transmit_last < shock_delay) {
+  if (millis() - transmit_last < shock_delay) {  // Disregards commands during delay
     return;
   }
   int command_mode;
-  switch (bitRead(command, 7)) {
+  switch (bitRead(command, 7)) {  // Reads most significant bit to set mode of collar
     case 1: command_mode = COLLAR_ZAP; break;
     default: command_mode = COLLAR_VIB; break;
   }
-  bitWrite(command, 7, 0);
+  bitWrite(command, 7, 0);  // Sets the mode bit to false so the power value can read as essentially a 7-bit integer
   int power = command;
-  for (int i = 0; i < 5; i++) {
-    transmit_command(collar_chan, command_mode, power);
+
+  for (byte i = 0; i < 5; i++) {
+    transmit_command(collar_chan, command_mode, power);  // Uses command data to transmit to the collar
   }
 }
 //=================================================== End OF SERIAL RECEIVER CODE ====================================================================
@@ -147,6 +155,8 @@ void setup() {
 
 void loop() {
   collar_keepalive();
+
+  // Reads Serial data if available, sends it back to confirm
   if (Serial.available()) {
     receivedData = Serial.read();
     Serial.write(receivedData);
